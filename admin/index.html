@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HADRA Admin</title>
+<link rel="icon" href="data:," />
+<style>
+  :root {
+    --pink: #e8306f;
+    --pink-dark: #b0175a;
+    --pink-soft: #ff6fa3;
+    --blush: #ffd9e6;
+    --cream: #fff6f4;
+    --mist: #ffeff4;
+    --ink: #3a0e22;
+    --muted: #8a6b76;
+    --border: #f0d7df;
+    --white: #ffffff;
+    --green: #1f9d55;
+    --red: #d6304a;
+    --amber: #c98a12;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #fff5f8 0%, #fdeef3 100%);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+
+  /* ---------- login ---------- */
+  #login-view {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--white);
+    border-radius: 24px;
+    padding: 32px 28px;
+    box-shadow: 0 20px 50px -20px rgba(176, 23, 90, 0.35);
+  }
+  .login-card h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    color: var(--pink-dark);
+    text-align: center;
+  }
+  .login-card p.sub {
+    margin: 0 0 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    font-size: 14px;
+    background: var(--mist);
+    color: var(--ink);
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--pink);
+    background: var(--white);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--pink-soft), var(--pink));
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px -10px rgba(232, 48, 111, 0.6);
+  }
+  .btn:disabled { opacity: 0.55; cursor: default; }
+  .btn.secondary {
+    background: var(--white);
+    color: var(--pink-dark);
+    border: 1.5px solid var(--blush);
+    box-shadow: none;
+  }
+  .btn.small { width: auto; padding: 8px 14px; font-size: 12.5px; }
+  .error-text {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--red);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* ---------- app shell ---------- */
+  #app-view { display: none; min-height: 100vh; }
+  header.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header.topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--pink-dark); font-size: 16px; }
+  header.topbar .brand .crown { font-size: 18px; }
+  header.topbar .who { font-size: 12.5px; color: var(--muted); }
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 10px 24px 0;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  nav.tabs button {
+    border: none;
+    background: transparent;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  nav.tabs button.active { color: var(--pink-dark); border-bottom-color: var(--pink); }
+
+  main { max-width: 1040px; margin: 0 auto; padding: 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 24px -18px rgba(176, 23, 90, 0.4);
+  }
+  .stat-card .label { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+  .stat-card .value { font-size: 26px; font-weight: 800; color: var(--pink-dark); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+  .card { background: var(--white); border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 24px -18px rgba(176, 23, 90, 0.4); margin-bottom: 18px; }
+  .card h2 { margin: 0 0 14px; font-size: 15px; color: var(--ink); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.02em; color: var(--muted); padding: 8px 10px; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 10px; border-bottom: 1px solid var(--mist); vertical-align: middle; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .pill.premium { background: #ffe3ee; color: var(--pink-dark); }
+  .pill.banned { background: #fde2e2; color: var(--red); }
+  .pill.ok { background: #e3f6ea; color: var(--green); }
+  .pill.pending { background: #fdf1da; color: var(--amber); }
+  .pill.admin { background: #eee0ff; color: #6a2fc9; }
+
+  .search-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .search-row input { flex: 1; min-width: 200px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border); font-size: 13px; background: var(--mist); }
+  .search-row input:focus { outline: none; border-color: var(--pink); background: var(--white); }
+
+  .inline-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .action-btn {
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--pink-dark);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .action-btn.danger { color: var(--red); border-color: #f6c8ce; }
+  .action-btn:hover { background: var(--mist); }
+  .action-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .muted { color: var(--muted); }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; }
+  .toast.err { background: var(--red); }
+
+  .add-admin-row { display: flex; gap: 10px; margin-top: 14px; }
+  .add-admin-row input { flex: 1; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--border); font-size: 13px; }
+
+  .empty { text-align: center; padding: 30px 10px; color: var(--muted); font-size: 13px; }
+  .loading { text-align: center; padding: 30px 10px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="login-view">
+  <div class="login-card">
+    <h1>👑 HADRA Admin</h1>
+    <p class="sub">Sign in with your admin account.</p>
+    <div class="field">
+      <label for="login-email">Email</label>
+      <input id="login-email" type="email" autocomplete="username" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" />
+    </div>
+    <button class="btn" id="login-btn">Sign In</button>
+    <div class="error-text" id="login-error" style="display:none"></div>
+  </div>
+</div>
+
+<div id="app-view">
+  <header class="topbar">
+    <div class="brand"><span class="crown">👑</span> HADRA Admin</div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span class="who" id="who-label"></span>
+      <button class="btn secondary small" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-panel="overview">Overview</button>
+    <button class="tab-btn" data-panel="users">Users</button>
+    <button class="tab-btn" data-panel="admins">Admins</button>
+  </nav>
+
+  <main>
+    <section class="panel active" id="panel-overview">
+      <div class="grid" id="stats-grid">
+        <div class="loading">Loading stats…</div>
+      </div>
+      <div class="card">
+        <h2>Revenue</h2>
+        <div id="revenue-summary" class="loading">Loading revenue…</div>
+      </div>
+      <div class="card">
+        <h2>Recent payments</h2>
+        <div class="table-wrap">
+          <table id="payments-table">
+            <thead>
+              <tr><th>When</th><th>Email</th><th>Plan</th><th>Amount</th><th>Gateway</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-users">
+      <div class="card">
+        <div class="search-row">
+          <input id="user-search" type="text" placeholder="Search by email…" />
+          <button class="btn small" id="user-search-btn" style="width:auto">Search</button>
+        </div>
+        <div class="table-wrap">
+          <table id="users-table">
+            <thead>
+              <tr><th>Email</th><th>Name</th><th>Status</th><th>Credits</th><th>Joined</th><th>Actions</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-admins">
+      <div class="card">
+        <h2>Admins</h2>
+        <div class="table-wrap">
+          <table id="admins-table">
+            <thead><tr><th>Email</th><th>Name</th><th>Since</th></tr></thead>
+            <tbody><tr><td colspan="3" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="add-admin-row">
+          <input id="add-admin-email" type="email" placeholder="New admin's email (must already have a HADRA account)" />
+          <button class="btn small" id="add-admin-btn" style="width:auto">Add Admin</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'https://hadra-api.hadra-app.workers.dev';
+const SUPABASE_URL = 'https://quedyhsqgmshtsthntvh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_J1CbyPz8noei_2XiKG3fUw_2KhukmE0';
+const SESSION_KEY = 'hadra_admin_session';
+
+let session = null;
+try {
+  const raw = sessionStorage.getItem(SESSION_KEY);
+  if (raw) session = JSON.parse(raw);
+} catch (e) {}
+
+function saveSession(s) {
+  session = s;
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {}
+}
+function clearSession() {
+  session = null;
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+}
+
+function showToast(message, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.className = 'toast show' + (isError ? ' err' : '');
+  setTimeout(() => { el.className = 'toast'; }, 3200);
+}
+
+function fmtMoney(n) {
+  return '$' + Number(n).toFixed(2);
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function supabaseLogin(email, password) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error_description || body.msg || 'Sign-in failed.');
+  return body; // { access_token, user, ... }
+}
+
+async function refreshSession() {
+  if (!session?.refresh_token) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    });
+    if (!res.ok) return false;
+    saveSession(await res.json());
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function adminFetch(path, options = {}, isRetry = false) {
+  if (!session) throw new Error('Not signed in.');
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (res.status === 401 && !isRetry) {
+    // Access tokens expire after ~1h — try a silent refresh before giving up.
+    const refreshed = await refreshSession();
+    if (refreshed) return adminFetch(path, options, true);
+  }
+  const text = await res.text();
+  let body = {};
+  try { body = text ? JSON.parse(text) : {}; } catch (e) {}
+  if (!res.ok) {
+    if (res.status === 401) {
+      clearSession();
+      showLogin();
+      throw new Error('Your session expired — please sign in again.');
+    }
+    throw new Error(body.error || `Request failed (${res.status})`);
+  }
+  return body;
+}
+
+function showLogin() {
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('app-view').style.display = 'none';
+}
+function showApp() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'block';
+  document.getElementById('who-label').textContent = session.user?.email || '';
+  loadOverview();
+  loadUsers();
+  loadAdmins();
+}
+
+document.getElementById('login-btn').addEventListener('click', doLogin);
+document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  if (!email || !password) return;
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  try {
+    const authResult = await supabaseLogin(email, password);
+    saveSession(authResult);
+    // Verify this account is actually an admin before showing the dashboard.
+    await adminFetch('/admin/admins');
+    showApp();
+  } catch (err) {
+    clearSession();
+    errEl.textContent = err.message === 'Not authorized.' ? 'This account is not an admin.' : err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  clearSession();
+  showLogin();
+});
+
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
+  });
+});
+
+async function loadOverview() {
+  try {
+    const stats = await adminFetch('/admin/stats');
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="label">Total users</div><div class="value">${stats.totalUsers}</div></div>
+      <div class="stat-card"><div class="label">Premium users</div><div class="value">${stats.premiumUsers}</div></div>
+      <div class="stat-card"><div class="label">Replies generated</div><div class="value">${stats.totalReplies}</div></div>
+      <div class="stat-card"><div class="label">Signups (7d)</div><div class="value">${stats.signupsLast7d}</div></div>
+      <div class="stat-card"><div class="label">Signups (30d)</div><div class="value">${stats.signupsLast30d}</div></div>
+    `;
+  } catch (err) {
+    document.getElementById('stats-grid').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+
+  try {
+    const revenue = await adminFetch('/admin/revenue');
+    const byPlan = revenue.byPlan.length
+      ? revenue.byPlan.map((p) => `<span class="pill ok" style="margin-right:6px">${esc(p.planId)}: ${p.count} · ${fmtMoney(p.totalUsd)}</span>`).join('')
+      : '<span class="muted">No successful payments yet.</span>';
+    document.getElementById('revenue-summary').innerHTML = `
+      <div style="font-size:28px; font-weight:800; color:var(--pink-dark); margin-bottom:10px;">${fmtMoney(revenue.totalUsd)} <span style="font-size:13px; font-weight:600; color:var(--muted)">total (successful payments)</span></div>
+      <div>${byPlan}</div>
+    `;
+
+    const tbody = document.querySelector('#payments-table tbody');
+    if (!revenue.recent.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No payment attempts yet.</td></tr>';
+    } else {
+      tbody.innerHTML = revenue.recent
+        .map((p) => {
+          const statusClass = p.status === 'success' ? 'ok' : p.status === 'pending' ? 'pending' : 'banned';
+          return `<tr>
+            <td>${fmtDate(p.createdAt)}</td>
+            <td>${esc(p.email || '—')}</td>
+            <td>${esc(p.planId)}</td>
+            <td>${fmtMoney(p.amountUsd)}</td>
+            <td>${esc(p.gateway)}</td>
+            <td><span class="pill ${statusClass}">${esc(p.status)}</span></td>
+          </tr>`;
+        })
+        .join('');
+    }
+  } catch (err) {
+    document.getElementById('revenue-summary').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+}
+
+async function loadUsers(search) {
+  const tbody = document.querySelector('#users-table tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading…</td></tr>';
+  try {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+    const { users } = await adminFetch(`/admin/users${qs}`);
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No users found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(renderUserRow).join('');
+    users.forEach(wireUserRowActions);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">${esc(err.message)}</td></tr>`;
+  }
+}
+
+function renderUserRow(u) {
+  const banned = u.bannedUntil && new Date(u.bannedUntil) > new Date();
+  let statusPill = '<span class="pill" style="background:var(--mist); color:var(--muted)">Free</span>';
+  if (u.isPremium) statusPill = `<span class="pill premium">Premium${u.premiumUntil ? ' · ' + fmtDate(u.premiumUntil) : ''}</span>`;
+  if (banned) statusPill += ' <span class="pill banned">Banned</span>';
+  if (u.isAdmin) statusPill += ' <span class="pill admin">Admin</span>';
+  return `<tr data-email="${esc(u.email)}">
+    <td>${esc(u.email)}</td>
+    <td>${esc(u.name || '—')}</td>
+    <td>${statusPill}</td>
+    <td>${u.credits}</td>
+    <td>${fmtDate(u.createdAt)}</td>
+    <td>
+      <div class="inline-actions">
+        <button class="action-btn grant-btn">+30d Premium</button>
+        ${banned
+          ? '<button class="action-btn unban-btn">Unban</button>'
+          : '<button class="action-btn danger ban-btn">Ban</button>'}
+      </div>
+    </td>
+  </tr>`;
+}
+
+function wireUserRowActions(u) {
+  const row = document.querySelector(`#users-table tr[data-email="${CSS.escape(u.email)}"]`);
+  if (!row) return;
+  const grantBtn = row.querySelector('.grant-btn');
+  const banBtn = row.querySelector('.ban-btn');
+  const unbanBtn = row.querySelector('.unban-btn');
+
+  if (grantBtn) grantBtn.addEventListener('click', async () => {
+    grantBtn.disabled = true;
+    try {
+      await adminFetch('/admin/users/grant-premium', { method: 'POST', body: JSON.stringify({ email: u.email, days: 30 }) });
+      showToast(`Granted 30 days premium to ${u.email}`);
+      loadUsers(document.getElementById('user-search').value.trim());
+    } catch (err) {
+      showToast(err.message, true);
+      grantBtn.disabled = false;
+    }
+  });
+
+  if (banBtn) banBtn.addEventListener('click', async () => {
+    const reason = prompt(`Why are you banning ${u.email}? This is shown to them when they try to sign in.`);
+    if (reason === null) return; // cancelled
+    banBtn.disabled = true;
+    try {
+      await adminFetch('/admin/users/ban', { method: 'POST', body: JSON.stringify({ email: u.email, reason: reason.trim() || undefined }) });
+      showToast(`Banned ${u.email}`);
+      loadUsers(document.getElementById('user-search').value.trim());
+    } catch (err) {
+      showToast(err.message, true);
+      banBtn.disabled = false;
+    }
+  });
+
+  if (unbanBtn) unbanBtn.addEventListener('click', async () => {
+    unbanBtn.disabled = true;
+    try {
+      await adminFetch('/admin/users/unban', { method: 'POST', body: JSON.stringify({ email: u.email }) });
+      showToast(`Unbanned ${u.email}`);
+      loadUsers(document.getElementById('user-search').value.trim());
+    } catch (err) {
+      showToast(err.message, true);
+      unbanBtn.disabled = false;
+    }
+  });
+}
+
+document.getElementById('user-search-btn').addEventListener('click', () => loadUsers(document.getElementById('user-search').value.trim()));
+document.getElementById('user-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadUsers(e.target.value.trim()); });
+
+async function loadAdmins() {
+  const tbody = document.querySelector('#admins-table tbody');
+  tbody.innerHTML = '<tr><td colspan="3" class="loading">Loading…</td></tr>';
+  try {
+    const { admins } = await adminFetch('/admin/admins');
+    tbody.innerHTML = admins
+      .map((a) => `<tr><td>${esc(a.email)}</td><td>${esc(a.name || '—')}</td><td>${fmtDate(a.createdAt)}</td></tr>`)
+      .join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty">${esc(err.message)}</td></tr>`;
+  }
+}
+
+document.getElementById('add-admin-btn').addEventListener('click', async () => {
+  const input = document.getElementById('add-admin-email');
+  const email = input.value.trim();
+  if (!email) return;
+  const btn = document.getElementById('add-admin-btn');
+  btn.disabled = true;
+  try {
+    await adminFetch('/admin/admins', { method: 'POST', body: JSON.stringify({ email }) });
+    showToast(`${email} is now an admin`);
+    input.value = '';
+    loadAdmins();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Boot: if we have a saved session, verify it's still valid before showing the dashboard.
+(async function boot() {
+  if (!session) { showLogin(); return; }
+  try {
+    await adminFetch('/admin/admins');
+    showApp();
+  } catch (err) {
+    clearSession();
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>
